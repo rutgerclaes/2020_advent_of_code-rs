@@ -1,0 +1,6 @@
+light red bags contain 1 light white bag, 1 light red bag.
+light white bags contain 2 dark olive bag, 1 light red bag.
+dark blue bags contain 1 dark yellow bag.
+dark yellow bags contain 1 dark green bag.
+dark green bags contain 1 dark blue bag.
+dark olive bags contain 1 white bag, 1 light red bag, 1 dark olive bag.

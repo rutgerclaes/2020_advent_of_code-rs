@@ -1,0 +1,8 @@
+[package]
+name = "utils"
+version = "0.1.0"
+authors = ["Rutger Claes <rgc@rgc.be>"]
+edition = "2018"
+
+[dependencies]
+im-rc = "15.0.0"
