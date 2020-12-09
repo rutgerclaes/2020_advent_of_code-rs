@@ -6,19 +6,19 @@ use utils::read_integers_from_param;
 
 fn main() {
     println!("--- [AoC 2020] Day 1: Report Repair ---");
-    let input: Vector<i32> = read_integers_from_param();
+    let input: Vector<i64> = read_integers_from_param();
     part_one(&input);
     part_two(&input);
 }
 
-fn part_one(input: &Vector<i32>) {
+fn part_one(input: &Vector<i64>) {
     match find_complement(2020, input) {
         Some((a, b)) => println!("Solution for part one is: {}", a * b),
         None => panic!("No results found for part one"),
     }
 }
 
-fn part_two(input: &Vector<i32>) {
+fn part_two(input: &Vector<i64>) {
     match input
         .iter()
         .combinations(3)
@@ -32,7 +32,7 @@ fn part_two(input: &Vector<i32>) {
     }
 }
 
-fn find_complement(total: i32, other_candidates: &Vector<i32>) -> Option<(i32, i32)> {
+fn find_complement(total: i64, other_candidates: &Vector<i64>) -> Option<(i64, i64)> {
     match other_candidates.head() {
         Some(&head) => match find_complement_of(total, head, &other_candidates.skip(1)) {
             Some(complement) => Some((head, complement)),
@@ -42,7 +42,7 @@ fn find_complement(total: i32, other_candidates: &Vector<i32>) -> Option<(i32, i
     }
 }
 
-fn find_complement_of(total: i32, candidate: i32, other_candidates: &Vector<i32>) -> Option<i32> {
+fn find_complement_of(total: i64, candidate: i64, other_candidates: &Vector<i64>) -> Option<i64> {
     match other_candidates.head() {
         Some(&head) if total == candidate + head => Some(head),
         Some(_head) => find_complement_of(total, candidate, &other_candidates.skip(1)),
