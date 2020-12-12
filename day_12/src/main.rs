@@ -11,6 +11,7 @@ fn main() {
     println!("--- [AoC 2020] Day 12: Rain Risk ---");
     let input = utils::read_strings_from_param();
     part_one(&input);
+    part_two(&input);
 }
 
 fn part_one(input: &Vector<String>) {
@@ -24,6 +25,19 @@ fn part_one(input: &Vector<String>) {
     let result = final_position.x.abs() + final_position.y.abs();
 
     println!("Result of part one: {}", result);
+}
+
+fn part_two(input: &Vector<String>) {
+    let actions = input.iter().map(|l| Action::try_from(&l[..]).unwrap());
+    let ship = WaypointShip::new(&Point::new(10, 1));
+    let final_position = actions.fold(ship, |mut sh, action| {
+        sh.take_action(&action);
+        sh
+    });
+
+    let result = final_position.position.x.abs() + final_position.position.y.abs();
+
+    println!("Result of part two: {}", result);
 }
 
 #[derive(Copy, PartialEq, Debug, Clone)]
@@ -49,6 +63,15 @@ impl Action {
             ),
             Self::TurnLeft(angle) => (ship.direction.turn_left(angle), 0, 0),
             Self::TurnRight(angle) => (ship.direction.turn_right(angle), 0, 0),
+        }
+    }
+
+    fn applied_to_waypoint(&self, position: &Point, waypoint: &Point) -> Point {
+        match self {
+            Self::Forward(_) => *waypoint,
+            Self::Move(distance, direction) => waypoint.move_in_direction(direction, distance),
+            Self::TurnLeft(angle) => waypoint.rotate_around(position, angle),
+            Self::TurnRight(angle) => waypoint.rotate_around(position, &(-1 * angle)),
         }
     }
 }
@@ -109,6 +132,10 @@ impl Direction {
         }
     }
 
+    fn delta(&self) -> (i32, i32) {
+        (self.dx(), self.dy())
+    }
+
     fn turn_left(&self, angle: &i32) -> Direction {
         Direction::from(i32::from(self) + angle)
     }
@@ -140,6 +167,49 @@ impl From<&Direction> for i32 {
     }
 }
 
+#[derive(Copy, Clone, PartialEq, Debug)]
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+impl Point {
+    fn new(x: i32, y: i32) -> Point {
+        Point { x, y }
+    }
+
+    fn delta(&self, other: &Point) -> (i32, i32) {
+        (other.x - self.x, other.y - self.y)
+    }
+
+    fn rotate_around(&self, other: &Point, angle: &i32) -> Point {
+        match angle.rem_euclid(360) / 90 {
+            0 => *self,
+            1 => {
+                let (dx, dy) = other.delta(self);
+                Point::new(other.x - dy, other.y + dx)
+            }
+            2 => {
+                let (dx, dy) = other.delta(self);
+                Point::new(other.x - dx, other.y - dy)
+            }
+            3 => {
+                let (dx, dy) = other.delta(self);
+                Point::new(other.x + dy, other.y - dx)
+            }
+            _ => panic!("Failed to rotate {} degrees", angle),
+        }
+    }
+
+    fn move_in_direction(&self, direction: &Direction, distance: &i32) -> Point {
+        self.move_by_delta(&direction.delta(), distance)
+    }
+
+    fn move_by_delta(&self, delta: &(i32, i32), distance: &i32) -> Point {
+        Point::new(self.x + distance * delta.0, self.y + distance * delta.1)
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 struct Ship {
     x: i32,
@@ -161,6 +231,34 @@ impl Ship {
         self.x += dx;
         self.y += dy;
         self.direction = new_direction;
+    }
+}
+
+#[derive(Debug)]
+struct WaypointShip {
+    waypoint: Point,
+    position: Point,
+}
+
+impl WaypointShip {
+    fn new(waypoint: &Point) -> WaypointShip {
+        WaypointShip {
+            position: Point::new(0, 0),
+            waypoint: *waypoint,
+        }
+    }
+
+    fn take_action(&mut self, action: &Action) {
+        match action {
+            Action::Forward(distance) => {
+                let delta = self.position.delta(&self.waypoint);
+                self.position = self.position.move_by_delta(&delta, distance);
+                self.waypoint = self.waypoint.move_by_delta(&delta, distance);
+            }
+            other_action => {
+                self.waypoint = other_action.applied_to_waypoint(&self.position, &self.waypoint);
+            }
+        }
     }
 }
 
