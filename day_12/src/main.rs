@@ -22,7 +22,9 @@ fn part_one(input: &Vector<String>) {
         sh
     });
 
-    let result = final_position.x.abs() + final_position.y.abs();
+    let result = final_position
+        .position
+        .manhatten_distance_to(&Point::origin());
 
     println!("Result of part one: {}", result);
 }
@@ -35,7 +37,9 @@ fn part_two(input: &Vector<String>) {
         sh
     });
 
-    let result = final_position.position.x.abs() + final_position.position.y.abs();
+    let result = final_position
+        .position
+        .manhatten_distance_to(&Point::origin());
 
     println!("Result of part two: {}", result);
 }
@@ -49,20 +53,18 @@ enum Action {
 }
 
 impl Action {
-    fn applied_to(&self, ship: &Ship) -> (Direction, i32, i32) {
+    fn applied_to(&self, ship: &Ship) -> (Point, Direction) {
         match self {
             Self::Forward(distance) => (
+                ship.position.move_in_direction(&ship.direction, distance),
                 ship.direction,
-                ship.direction.dx() * distance,
-                ship.direction.dy() * distance,
             ),
             Self::Move(distance, direction) => (
+                ship.position.move_in_direction(&direction, distance),
                 ship.direction,
-                distance * direction.dx(),
-                distance * direction.dy(),
             ),
-            Self::TurnLeft(angle) => (ship.direction.turn_left(angle), 0, 0),
-            Self::TurnRight(angle) => (ship.direction.turn_right(angle), 0, 0),
+            Self::TurnLeft(angle) => (ship.position, ship.direction.turn_left(angle)),
+            Self::TurnRight(angle) => (ship.position, ship.direction.turn_right(angle)),
         }
     }
 
@@ -174,12 +176,20 @@ struct Point {
 }
 
 impl Point {
+    fn origin() -> Point {
+        Point::new(0, 0)
+    }
     fn new(x: i32, y: i32) -> Point {
         Point { x, y }
     }
 
     fn delta(&self, other: &Point) -> (i32, i32) {
         (other.x - self.x, other.y - self.y)
+    }
+
+    fn manhatten_distance_to(&self, other: &Point) -> i32 {
+        let (dx, dy) = self.delta(other);
+        dx.abs() + dy.abs()
     }
 
     fn rotate_around(&self, other: &Point, angle: &i32) -> Point {
@@ -212,24 +222,21 @@ impl Point {
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 struct Ship {
-    x: i32,
-    y: i32,
+    position: Point,
     direction: Direction,
 }
 
 impl Ship {
     fn new() -> Ship {
         Ship {
-            x: 0,
-            y: 0,
+            position: Point::origin(),
             direction: Direction::E,
         }
     }
 
     fn take_action(&mut self, action: &Action) {
-        let (new_direction, dx, dy) = action.applied_to(&self);
-        self.x += dx;
-        self.y += dy;
+        let (new_position, new_direction) = action.applied_to(&self);
+        self.position = new_position;
         self.direction = new_direction;
     }
 }
@@ -243,7 +250,7 @@ struct WaypointShip {
 impl WaypointShip {
     fn new(waypoint: &Point) -> WaypointShip {
         WaypointShip {
-            position: Point::new(0, 0),
+            position: Point::origin(),
             waypoint: *waypoint,
         }
     }
