@@ -7,7 +7,7 @@ use std::collections::HashMap;
 fn main() {
     println!("--- [AoC 2020] Day 15: Rambunctious Recitation ---");
 
-    let test_input = vector!(0, 3, 6);
+    // let test_input = vector!(0, 3, 6);
     let input = vector!(9, 12, 1, 4, 17, 0, 18);
 
     println!("Solution to part one: {}", part_one(&input));
