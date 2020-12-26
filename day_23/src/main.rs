@@ -7,26 +7,53 @@ use im_rc::HashMap;
 use im_rc::Vector;
 use itertools::Itertools;
 use log::{debug, info};
+use pbr::ProgressBar;
 
 fn main() {
     pretty_env_logger::init();
     info!("--- [AoC 2020] Day 23: Crab Cups ---");
 
+    // let input = vector!(3, 8, 9, 1, 2, 5, 4, 6, 7);
     let input = vector![9, 1, 6, 4, 3, 8, 2, 7, 5];
 
     info!("Solution to part one: {}", part_one(&input));
+    info!("Solution to part two: {}", part_two(&input));
 }
 
 fn part_one(input: &Vector<u32>) -> String {
+    let mut progress = ProgressBar::new(100);
     let ring = Ring::new(&input);
     let largest = input.iter().max().unwrap();
     let active = *input.head().unwrap();
 
     let (_, mut ring) = (1..=100).fold((active, ring), |(active, ring), nb_move| {
+        progress.inc();
         do_move(&nb_move, active, largest, ring)
     });
 
+    progress.finish();
     ring.pick_up_after(1, 8).iter().join("")
+}
+
+fn part_two(input: &Vector<u32>) -> u64 {
+    let mut progress = ProgressBar::new(10_000_000);
+    let largest = 1_000_000;
+    let mut padded_input: Vector<u32> = input.iter().copied().collect();
+    padded_input.append((10..=largest).collect());
+    let ring = Ring::new(&padded_input);
+    let active = *input.head().unwrap();
+
+    let (_, ring) = (1..=10_000_000).fold((active, ring), |(active, ring), nb_move| {
+        progress.inc();
+        do_move(&nb_move, active, &largest, ring)
+    });
+
+    progress.finish();
+
+    let a = ring.next(&1);
+    let b = ring.next(a);
+
+    *a as u64 * *b as u64
 }
 
 fn do_move(move_nb: &usize, active: u32, largest: &u32, mut ring: Ring) -> (u32, Ring) {
@@ -57,6 +84,7 @@ struct Ring {
 }
 
 impl Ring {
+    #[allow(dead_code)]
     fn len(&self) -> usize {
         self.forward_links.len()
     }
@@ -87,6 +115,7 @@ impl Ring {
         });
 
         let tail = self.forward_links.remove(&end).unwrap();
+
         self.forward_links.insert(start, tail);
         slice
     }
